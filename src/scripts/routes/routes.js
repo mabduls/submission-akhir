@@ -21,6 +21,10 @@ const routes = {
     template: '<detail-page></detail-page>',
     requiresAuth: true,
   },
+  '/bookmarks': {
+    template: '<bookmark-page></bookmark-page>',
+    requiresAuth: true,
+  },
 };
 
 function navigateToUrl(url) {

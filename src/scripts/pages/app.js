@@ -7,6 +7,7 @@ import RegisterPresenter from '../pages/auth/register/register-presenter';
 import HomePresenter from '../pages/home/home-presenter';
 import CreatePresenter from '../pages/create/create-presenter';
 import DetailPresenter from '../pages/detail/detail-presenter';
+import BookmarkPresenter from '../pages/bookmark/bookmark-presenter';
 
 class App {
   constructor({ content }) {
@@ -22,7 +23,6 @@ class App {
       const pathname = getActivePathname();
       const { resource, id } = parsePathname(pathname);
       
-      // Determine the route pattern
       let routePattern = pathname === '/' ? '/' : `/${resource || ''}`;
       if (id) {
         routePattern += '/:id';
@@ -36,7 +36,6 @@ class App {
   
       this._content.innerHTML = route.template;
   
-      // Handle initialization based on exact path matches
       if (pathname === '/') {
         await this._initLoginPage();
       } else if (pathname === '/register') {
@@ -44,13 +43,17 @@ class App {
       } else if (pathname === '/home') {
         await this._initHomePage();
         await this.#checkPushSubscription();
-      } else if (pathname === '/create') {
+      } else if (pathname === '/home') {
+        await this._initHomePage();
+        await this.#checkPushSubscription(); 
+      }else if (pathname === '/create') {
         await this._initCreatePage();
+      } else if (pathname === '/bookmarks') {
+        await this._initBookmarkPage();
       } else if (resource === 'detail' && id) {
         await this._initDetailPage(id);
       } else {
         console.warn(`No handler for route: ${pathname}`);
-        // Redirect to home if authenticated, or to login if not
         if (getAccessToken()) {
           navigateToUrl('/home');
         } else {
@@ -59,7 +62,6 @@ class App {
       }
     } catch (error) {
       console.error('Failed to render page:', error);
-      // Fallback UI for errors
       this._content.innerHTML = `
         <div style="color: white; padding: 2rem; text-align: center;">
           <h2>Terjadi Error</h2>
@@ -148,6 +150,30 @@ class App {
         view: detailPage,
         storyId: id
       });
+    }
+  }
+
+  async _initBookmarkPage() {
+    try {
+      await customElements.whenDefined('bookmark-page');
+      const bookmarkPage = this._content.querySelector('bookmark-page');
+      if (bookmarkPage) {
+        if (!BookmarkPresenter) {
+          throw new Error('BookmarkPresenter is not defined');
+        }
+        BookmarkPresenter.init({
+          view: bookmarkPage
+        });
+      }
+    } catch (error) {
+      console.error('Failed to init bookmark page:', error);
+      this._content.innerHTML = `
+        <div style="color: white; padding: 2rem; text-align: center;">
+          <h2>Error Loading Bookmarks</h2>
+          <p>${error.message}</p>
+          <button onclick="window.location.hash='#/home'">Back to Home</button>
+        </div>
+      `;
     }
   }
 }

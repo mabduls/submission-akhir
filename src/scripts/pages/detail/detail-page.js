@@ -1,4 +1,6 @@
 import 'leaflet/dist/leaflet.css';
+import DetailPresenter from './detail-presenter.js';
+import StoryDatabase from '../../data/database';
 
 // Global Leaflet options
 const initLeaflet = () => {
@@ -28,7 +30,6 @@ export default class DetailPage extends HTMLElement {
       <style>
         :host {
           display: block;
-          min-height: 100vh;
           background-color: #222831;
           color: #eeeeee;
           font-family: 'Poppins', sans-serif;
@@ -39,7 +40,7 @@ export default class DetailPage extends HTMLElement {
           display: flex;
           flex-direction: column;
           min-height: 100vh;
-          width: 100%;
+          max-width: 100vw;
         }
         
         .navbar {
@@ -58,9 +59,17 @@ export default class DetailPage extends HTMLElement {
         .scrollable-content {
           flex: 1;
           overflow-y: auto;
-          width: 100%;
+          padding: 2rem 0;
           -webkit-overflow-scrolling: touch;
-          padding: 1rem 0;
+          width: 100%;
+          box-sizing: border-box;
+        }
+
+        .main-content {
+          flex: 1;
+          margin-top: 70px; 
+          padding-bottom: 2rem;
+          width: 100%;
         }
 
         .content {
@@ -121,20 +130,47 @@ export default class DetailPage extends HTMLElement {
         }
 
         .story-container {
+          display: block !important; 
           background-color: #393e46;
           border-radius: 8px;
-          overflow: hidden;
+          max-width: 700px;
+          overflow: visible !important; 
           box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-          margin: 1rem 0;
-          animation: fade-in 0.5s ease-out;
+          margin: 2rem auto;
         }
 
+        .bookmark-btn {
+          background: linear-gradient(135deg, #4a6fa5 0%, #166088 100%);
+          color: white;
+          border: none;
+          padding: 0.5rem 1rem;
+          border-radius: 6px;
+          cursor: pointer;
+          font-weight: 500;
+          transition: all 0.3s ease;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          margin-bottom: 1rem;
+        }
+
+        .bookmark-btn:hover {
+          background: linear-gradient(135deg, #166088 0%, #4a6fa5 100%);
+          transform: translateY(-2px);
+        }
+
+        .bookmark-btn svg {
+          width: 20px;
+          height: 20px;
+        }
+        
         .story-image {
           width: 100%;
-          height: auto;
-          max-height: 500px;
-          object-fit: cover;
+          max-height: 70vh;
+          object-fit: contain;
           display: block;
+          margin-bottom: 1rem !important;
+          border-radius: 8px 8px 0 0;
         }
         
         .story-content {
@@ -312,14 +348,16 @@ export default class DetailPage extends HTMLElement {
             </button>
           </div>
         </nav>
-        <div class="scrollable-content">
+        <main class="main-content">
           <div class="content">
-            <div id="storyContainer" class="loading">
-              <div class="loading-spinner"></div>
-              <p>Loading story...</p>
+            <div id="storyContainer">
+              <div class="loading">
+                <div class="loading-spinner"></div>
+                <p>Loading story...</p>
+              </div>
             </div>
           </div>
-        </div>
+        </main>
       </div>
     `;
   }
@@ -364,19 +402,54 @@ export default class DetailPage extends HTMLElement {
     }
   }
 
+  async toggleBookmark(story) {
+    try {
+      const isBookmarked = await DetailPresenter.toggleBookmark(story);
+      const bookmarkBtn = this.shadowRoot.querySelector('#bookmarkBtn');
+      
+      if (bookmarkBtn) {
+        bookmarkBtn.innerHTML = `
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="${isBookmarked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span>${isBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
+        `;
+      }
+      return isBookmarked;
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+      throw error;
+    }
+  }
+
+  async _checkBookmarkStatus() {
+    try {
+      const isBookmarked = await StoryDatabase.isStorySaved(this.story.id);
+      const bookmarkBtn = this.shadowRoot.querySelector('#bookmarkBtn');
+      
+      if (bookmarkBtn && isBookmarked) {
+        bookmarkBtn.innerHTML = `
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span>Bookmarked</span>
+        `;
+      }
+    } catch (error) {
+      console.error('Error checking bookmark status:', error);
+    }
+  }
+
   async initMap(lat, lon, title) {
-    // Clean up previous map if exists
     this._cleanupMap();
 
     const mapContainer = this.shadowRoot.querySelector('.map-container');
     if (!mapContainer) return;
 
     try {
-      // Load Leaflet dynamically
       const L = await import('leaflet');
       initLeaflet();
 
-      // Create map with same settings as home page
       this.map = L.map(mapContainer, {
         preferCanvas: true,
         zoomControl: false,
@@ -416,12 +489,10 @@ export default class DetailPage extends HTMLElement {
         className: 'custom-popup'
       }).openPopup();
 
-      // Fix map rendering issues
       setTimeout(() => {
         this.map.invalidateSize();
       }, 100);
 
-      // Add resize observer like in home page
       this.resizeObserver = new ResizeObserver(() => {
         setTimeout(() => {
           if (this.map) {
@@ -499,34 +570,54 @@ export default class DetailPage extends HTMLElement {
       return;
     }
 
-    // Create the story container structure
     container.innerHTML = `
-        <div class="story-container">
-          <img src="${this.story.photoUrl}" alt="${this.story.name}" class="story-image" loading="lazy">
-          <div class="story-content">
-            <h1 class="story-title">${this.story.name}</h1>
-            <div class="story-description">${this.story.description}</div>
-            <div class="story-meta">
-              <span class="story-author">By: ${this.story.name}</span>
-              <span class="story-date">Posted on: ${new Date(this.story.createdAt).toLocaleDateString('en-US', {
+      <div class="story-container">
+        <img src="${this.story.photoUrl}" alt="${this.story.name}" class="story-image" loading="lazy">
+        <div class="story-content">
+          <h1 class="story-title">${this.story.name}</h1>
+          <div class="story-description">${this.story.description}</div>
+          <button id="bookmarkBtn" class="bookmark-btn">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>Bookmark</span>
+          </button>
+          <div class="story-meta">
+            <span class="story-author">By: ${this.story.name}</span>
+            <span class="story-date">Posted on: ${new Date(this.story.createdAt).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     })}</span>
-            </div>
-            ${this.story.lat && this.story.lon ?
-        `<div class="story-map-container">
-                <div class="map-container"></div>
-              </div>` : ''}
           </div>
+          ${this.story.lat && this.story.lon ?
+        `<div class="story-map-container">
+              <div class="map-container"></div>
+            </div>` : ''}
         </div>
-      `;
+      </div>
+    `;
 
-    // If there are coordinates, initialize the map after the DOM is updated
+    const bookmarkBtn = container.querySelector('#bookmarkBtn');
+    bookmarkBtn.addEventListener('click', async () => {
+      try {
+        const isBookmarked = await this.toggleBookmark(this.story);
+        bookmarkBtn.innerHTML = `
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="${isBookmarked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
+          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
+        </svg>
+        <span>${isBookmarked ? 'Bookmarked' : 'Bookmark'}</span>
+      `;
+      } catch (error) {
+        console.error('Error toggling bookmark:', error);
+      }
+    });
+
+    this._checkBookmarkStatus();
+
     if (this.story.lat && this.story.lon) {
-      // Use setTimeout to ensure the DOM is fully updated
       setTimeout(() => {
         this.initMap(this.story.lat, this.story.lon, this.story.name);
       }, 0);
