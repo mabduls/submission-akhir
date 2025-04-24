@@ -1,0 +1,102 @@
+{
+    "name": "Story Apps Dicoding",
+    "short_name": "StoryDicoding",
+    "description": "Aplikasi berbagi cerita seputar Dicoding",
+    "start_url": "/index.html",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "portrait",
+    "background_color": "#222831",
+    "theme_color": "#27374D",
+    "icons": [
+    {
+        "src": "/icons/icon-72x72.png",
+        "sizes": "72x72",
+        "type": "image/png",
+        "purpose": "any maskable"
+    },
+    {
+        "src": "/icons/icon-96x96.png",
+        "sizes": "96x96",
+        "type": "image/png",
+        "purpose": "any maskable"
+    },
+    {
+        "src": "/icons/icon-128x128.png",
+        "sizes": "128x128",
+        "type": "image/png",
+        "purpose": "any maskable"
+    },
+    {
+        "src": "/icons/icon-144x144.png",
+        "sizes": "144x144",
+        "type": "image/png",
+        "purpose": "any maskable"
+    },
+    {
+        "src": "/icons/icon-152x152.png",
+        "sizes": "152x152",
+        "type": "image/png",
+        "purpose": "any maskable"
+    },
+    {
+        "src": "/icons/icon-192x192.png",
+        "sizes": "192x192",
+        "type": "image/png",
+        "purpose": "any maskable"
+    },
+    {
+        "src": "/icons/icon-384x384.png",
+        "sizes": "384x384",
+        "type": "image/png",
+        "purpose": "any maskable"
+    },
+    {
+        "src": "/icons/icon-512x512.png",
+        "sizes": "512x512",
+        "type": "image/png",
+        "purpose": "any maskable"
+    }
+    ],
+    "screenshots": [
+    {
+        "src": "/screenshots/home.webp",
+        "sizes": "1080x1920",
+        "type": "image/webp",
+        "description": "Halaman utama menampilkan daftar story"
+    },
+    {
+        "src": "/screenshots/create.webp",
+        "sizes": "1080x1920",
+        "type": "image/webp",
+        "description": "Halaman pembuatan story baru"
+    }
+    ],
+    "shortcuts": [
+    {
+        "name": "Buat Story Baru",
+        "short_name": "Buat Story",
+        "description": "Buat dan bagikan story baru",
+        "url": "/#/create",
+        "icons": [
+        {
+            "src": "/icons/shortcut-create.png",
+            "sizes": "96x96"
+        }
+        ]
+    },
+    {
+        "name": "Lihat Story",
+        "short_name": "Story",
+        "description": "Lihat semua story yang tersedia",
+        "url": "/#/home",
+        "icons": [
+        {
+            "src": "/icons/shortcut-stories.png",
+            "sizes": "96x96"
+        }
+        ]
+    }
+    ],
+    "categories": ["social", "productivity"]
+}
